@@ -1,5 +1,7 @@
 {
   "files.associations": {
-    "log.h": "c"
+    "log.h": "c",
+    "ugui.h": "c",
+    "gamepad.h": "c"
   }
 }

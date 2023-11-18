@@ -286,6 +286,7 @@ static void videoTask(void *arg)
             case MENU_EXIT:
                 display_show_hourglass();
                 system_application_set(0);
+                settings_save_str(SettingRomPath, "");
                 esp_restart();
                 break;
 

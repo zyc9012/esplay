@@ -226,7 +226,7 @@ static void ui_draw_page_list(char **files, int fileCount, int currentItem, int 
   }
 }
 
-char *ui_file_chooser(const char *path, const char *filter, int currentItem, char *title)
+char *ui_file_chooser(const char *path, const char *filter, int currentItem, char *title, menu_cb_f menu_cb)
 {
   const char *result = NULL;
   int extLen = strlen(filter);
@@ -334,6 +334,16 @@ char *ui_file_chooser(const char *path, const char *filter, int currentItem, cha
       {
         vTaskDelay(10);
         break;
+      }
+      else if (!prevKey.values[GAMEPAD_INPUT_MENU] && key.values[GAMEPAD_INPUT_MENU])
+      {
+        if (menu_cb != NULL)
+        {
+          menu_cb();
+          gamepad_read(&prevKey);
+          ui_draw_page_list(files, fileCount, selected, extLen, title);
+          continue;
+        }
       }
     }
     else
