@@ -358,7 +358,6 @@ static void system_video(bool draw)
     osd_getinput();
 }
 
-extern void do_audio_frame();
 extern bool forceConsoleReset;
 
 /* main emulation loop */
@@ -409,8 +408,6 @@ void nes_emulate(void)
 
         if (skipFrame % 7 == 0) ++skipFrame;
         ++skipFrame;
-
-        do_audio_frame();
 
         stopTime = xthal_get_ccount();
 

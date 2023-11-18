@@ -75,27 +75,27 @@ int osd_installtimer(int frequency, void *func, int funcsize, void *counter, int
 */
 static void (*audio_callback)(void *buffer, int length) = NULL;
 QueueHandle_t queue;
-static short *audio_frame;
+static short *audio_frame = NULL;
 
-void do_audio_frame()
+static void audioTask(void *arg)
 {
-    int left = DEFAULT_SAMPLERATE / NES_REFRESH_RATE;
-    while (left)
+    while (true)
     {
-        int n = DEFAULT_FRAGSIZE;
-        if (n > left)
-            n = left;
-        audio_callback(audio_frame, n);
+        if (audio_callback == NULL || audio_frame == NULL)
+        {
+            vTaskDelay(2);
+            continue;
+        }
+        audio_callback(audio_frame, DEFAULT_FRAGSIZE);
         //16 bit mono -> 32-bit (16 bit r+l)
-        for (int i = n - 1; i >= 0; i--)
+        for (int i = DEFAULT_FRAGSIZE - 1; i >= 0; i--)
         {
             int sample = (int)audio_frame[i];
 
             audio_frame[i * 2] = (short)sample;
             audio_frame[i * 2 + 1] = (short)sample;
         }
-        audio_submit(audio_frame, n);
-        left -= n;
+        audio_submit(audio_frame, DEFAULT_FRAGSIZE);
     }
 }
 
@@ -227,7 +227,6 @@ static void free_write(int num_dirties, rect_t *dirty_rects)
 /*
 static void custom_blit(bitmap_t *bmp, int num_dirties, rect_t *dirty_rects) {
     xQueueSend(vidQueue, &bmp, 0);
-    do_audio_frame();
 }
 */
 
@@ -525,7 +524,8 @@ int osd_init()
     //renderGfx(32+256,0,32,240,gb_frame.pixel_data,32,0,gb_frame.width);
 
     vidQueue = xQueueCreate(1, sizeof(bitmap_t *));
-    xTaskCreatePinnedToCore(&videoTask, "videoTask", 1024*3, NULL, 5, NULL, 1);
+    xTaskCreate(&videoTask, "videoTask", 1024*3, NULL, 5, NULL);
+    xTaskCreate(&audioTask, "audioTask", 1024*3, NULL, 4, NULL);
     osd_initinput();
     return 0;
 }

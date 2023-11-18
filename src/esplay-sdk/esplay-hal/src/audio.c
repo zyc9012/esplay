@@ -46,7 +46,7 @@ void audio_init(int sample_rate)
         .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB,
         .dma_buf_count = 8,
         //.dma_buf_len = 1472 / 2,  // (368samples * 2ch * 2(short)) = 1472
-        .dma_buf_len = 534,                       // (416samples * 2ch * 2(short)) = 1664
+        .dma_buf_len = 512,                       // (416samples * 2ch * 2(short)) = 1664
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, //Interrupt level 1
         .use_apll = 1
         };
