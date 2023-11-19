@@ -23,6 +23,7 @@
 
 static volatile bool input_task_is_running = false;
 static volatile input_gamepad_state gamepad_state;
+static volatile input_gamepad_state external_gamepad_state = { 0, };
 static input_gamepad_state previous_gamepad_state;
 static uint8_t debounce[GAMEPAD_INPUT_MAX];
 static volatile bool input_gamepad_initialized = false;
@@ -130,6 +131,11 @@ input_gamepad_state gamepad_input_read_raw()
     return state;
 }
 
+void set_external_gamepad_state(input_gamepad_state state)
+{
+    external_gamepad_state = state;
+}
+
 static void input_task(void *arg)
 {
     input_task_is_running = true;
@@ -204,6 +210,11 @@ void gamepad_read(input_gamepad_state *out_state)
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
 
     *out_state = gamepad_state;
+
+    for (int i = 0; i < GAMEPAD_INPUT_MAX; i++)
+    {
+        out_state->values[i] = out_state->values[i] | external_gamepad_state.values[i];
+    }
 
     xSemaphoreGive(xSemaphore);
 }
