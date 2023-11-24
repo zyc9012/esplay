@@ -55,6 +55,8 @@
 
 static nes_t nes;
 
+extern uint32_t cpu_frequency;
+
 /* find out if a file is ours */
 int nes_isourfile(const char *filename)
 {
@@ -376,8 +378,6 @@ void nes_emulate(void)
     uint stopTime;
     uint totalElapsedTime = 0;
     int frame = 0;
-    int skipFrame = 0;
-
 
     for (int i = 0; i < 4; ++i)
     {
@@ -401,13 +401,35 @@ void nes_emulate(void)
         }
         startTime = xthal_get_ccount();
 
-        bool renderFrame = ((skipFrame % 2) == 0);
+        if (nofrendo_ticks != last_ticks)
+        {
+            int tick_diff = nofrendo_ticks - last_ticks;
 
-        nes_renderframe(renderFrame);
-        system_video(renderFrame);
+            frames_to_render += tick_diff;
+            gui_tick(tick_diff);
+            last_ticks = nofrendo_ticks;
+        }
 
-        if (skipFrame % 7 == 0) ++skipFrame;
-        ++skipFrame;
+        if (true == nes.pause)
+        {
+            /* TODO: dim the screen, and pause/silence the apu */
+            system_video(true);
+            frames_to_render = 0;
+        }
+        else if (frames_to_render > 1)
+        {
+            frames_to_render--;
+            nes_renderframe(false);
+            system_video(false);
+        }
+        else if ((1 == frames_to_render && true == nes.autoframeskip)
+                || false == nes.autoframeskip)
+        {
+            nes_renderframe(true);
+            system_video(true);
+        }
+
+        vTaskDelay(cpu_frequency * 10 / configTICK_RATE_HZ); // reduce CPU usage
 
         stopTime = xthal_get_ccount();
 
@@ -422,7 +444,7 @@ void nes_emulate(void)
 
         if (frame == 60)
         {
-            float seconds = totalElapsedTime / (CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000000.0f);
+            float seconds = totalElapsedTime / (cpu_frequency * 1000000.0f);
             float fps = frame / seconds;
 
             printf("HEAP:0x%x, FPS:%f\n", esp_get_free_heap_size(), fps);
