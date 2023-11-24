@@ -525,8 +525,8 @@ int osd_init()
     //renderGfx(32+256,0,32,240,gb_frame.pixel_data,32,0,gb_frame.width);
 
     vidQueue = xQueueCreate(1, sizeof(bitmap_t *));
-    xTaskCreate(&videoTask, "videoTask", 1024*3, NULL, 5, NULL);
-    xTaskCreate(&audioTask, "audioTask", 1024*3, NULL, 4, NULL);
+    xTaskCreatePinnedToCore(&videoTask, "videoTask", 1024*3, NULL, 5, NULL, 0);
+    xTaskCreatePinnedToCore(&audioTask, "audioTask", 1024*3, NULL, 4, NULL, 0);
     osd_initinput();
     return 0;
 }
